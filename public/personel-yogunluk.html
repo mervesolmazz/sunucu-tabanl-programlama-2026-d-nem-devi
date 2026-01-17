@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personel Yoğunluğu Analizi</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="main-container">
+        <a href="dashboard.html" class="btn btn-back">← Panele Dön</a>
+
+        <div class="top-header" style="display: block; text-align: center;">
+            <h1>Personel Yük Analizi</h1>
+            <p style="margin: 0;">Şube bazlı dağılım ve kadro ihtiyaç karnesi</p>
+        </div>
+
+        <div class="grid-menu" style="grid-template-columns: 1fr 1fr; align-items: start;">
+            <!-- Grafik Kartı -->
+            <div class="card">
+                <h2>Personel Dağılımı</h2>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="personelChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tablo Kartı -->
+            <div class="card">
+                <h2>Kadro Karar Destek Tablosu</h2>
+                <div id="karneTable" style="margin-top: 20px;">
+                    <p>Yükleniyor...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const res = await fetch('/personeller');
+                const data = await res.json();
+
+                const subeData = {};
+                data.forEach(p => {
+                    if (!subeData[p.sube_adi]) subeData[p.sube_adi] = 0;
+                    subeData[p.sube_adi] += p.personel_toplam;
+                });
+
+                new Chart(document.getElementById('personelChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(subeData),
+                        datasets: [{
+                            data: Object.values(subeData),
+                            backgroundColor: ['#0ea5e9', '#6366f1', '#10b981', '#f59e0b', '#ef4444'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            } catch (err) { console.error(err); }
+
+            try {
+                const res = await fetch('/personeller/karneler');
+                const data = await res.json();
+
+                let html = '<table style="width:100%; border-collapse: collapse;">';
+                html += '<thead><tr style="border-bottom: 2px solid #e2e8f0;"><th style="text-align:left; padding:12px; color:var(--text-light);">Şube</th><th style="text-align:left; padding:12px; color:var(--text-light);">Karar</th></tr></thead><tbody>';
+
+                data.forEach(Row => {
+                    const statusClass = Row.karar.includes('ACİL') ? 'status-critical' : 'status-normal';
+                    html += `<tr><td style="padding:12px; border-bottom:1px solid #f1f5f9; font-weight:500;">${Row.sube}</td><td style="padding:12px; border-bottom:1px solid #f1f5f9;"><span class="status-badge ${statusClass}">${Row.karar}</span></td></tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('karneTable').innerHTML = html;
+            } catch (err) { console.error(err); }
+        }
+        loadData();
+    </script>
+</body>
+
+</html>

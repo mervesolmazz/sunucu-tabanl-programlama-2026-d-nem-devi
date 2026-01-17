@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ekipman Yoğunluğu Analizi</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="main-container">
+        <a href="dashboard.html" class="btn btn-back">← Panele Dön</a>
+
+        <div class="top-header" style="display: block; text-align: center;">
+            <h1>Ekipman Verimliliği</h1>
+            <p style="margin: 0;">Cihaz kapasite/kullanım oranları analizi</p>
+        </div>
+
+        <div class="card chart-wrapper">
+            <canvas id="ekipmanChart"></canvas>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <span class="status-badge status-normal" style="margin-right: 10px;">Yeşil: Verimli (>1)</span>
+            <span class="status-badge status-critical">Kırmızı: Yetersiz (<1)< /span>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const res = await fetch('/ekipmanlar/verimlilik');
+                const data = await res.json();
+
+                // İlk 15 veriyi al
+                const chartData = data.slice(0, 15);
+                const labels = chartData.map(d => `${d.ekipman_turu_adi} (${d.bolum_adi})`);
+                const scores = chartData.map(d => d.verimlilik_skoru);
+
+                const ctx = document.getElementById('ekipmanChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Verimlilik Skoru',
+                            data: scores,
+                            backgroundColor: scores.map(s => s < 1 ? '#ef4444' : '#10b981'),
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Verimlilik Skoru' },
+                                grid: { color: '#f1f5f9' }
+                            },
+                            y: { grid: { display: false } }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            } catch (err) { console.error(err); }
+        }
+        loadData();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol | Hastane KDS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-container">
+    <div class="glass-panel">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2>Yeni Hesap Oluştur</h2>
+            <p>Sisteme erişim için kayıt olun</p>
+        </div>
+
+        <input type="text" id="name" placeholder="Ad Soyad">
+        <input type="email" id="email" placeholder="E-posta Adresi">
+        <input type="text" id="username" placeholder="Kullanıcı Adı">
+        <input type="password" id="password" placeholder="Şifre">
+        <select id="role">
+            <option value="user">Kullanıcı (Standart)</option>
+            <option value="doctor">Doktor</option>
+            <option value="manager">Yönetici</option>
+        </select>
+
+        <button onclick="register()" class="btn btn-primary" style="margin-top: 10px;">Kayıt Ol</button>
+
+        <p id="successMsg" style="color: var(--success-color); text-align: center; margin-top: 15px; display: none;">
+        </p>
+        <p id="errorMsg" style="color: var(--danger-color); text-align: center; margin-top: 15px; display: none;"></p>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="index.html" style="color: var(--primary-color); text-decoration: none;">Giriş Yap</a>
+        </div>
+    </div>
+
+    <script>
+        async function register() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const successMsg = document.getElementById('successMsg');
+            const errorMsg = document.getElementById('errorMsg');
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, username, password, role })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successMsg.innerText = data.message;
+                    successMsg.style.display = 'block';
+                    errorMsg.style.display = 'none';
+                    setTimeout(() => window.location.href = 'index.html', 2000);
+                } else {
+                    errorMsg.innerText = data.error || 'Kayıt başarısız';
+                    errorMsg.style.display = 'block';
+                    successMsg.style.display = 'none';
+                }
+            } catch (err) {
+                errorMsg.innerText = 'Sunucu hatası!';
+                errorMsg.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+
+</html>

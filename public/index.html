@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap | Hastane KDS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-container">
+    <div class="glass-panel">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div
+                style="width: 60px; height: 60px; background: var(--primary-color); border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 30px; margin-bottom: 10px;">
+                🏥</div>
+            <h1>Yönetici Girişi</h1>
+            <p>Hastane Karar Destek Sistemi</p>
+        </div>
+
+        <input type="text" id="username" placeholder="Kullanıcı Adı">
+        <input type="password" id="password" placeholder="Şifre">
+
+        <button onclick="login()" class="btn btn-primary">Giriş Yap →</button>
+
+        <p id="errorMsg" style="color: var(--danger-color); text-align: center; margin-top: 15px; display: none;"></p>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="register.html" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">Hesap
+                Oluştur</a>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('userRole', data.role);
+                    window.location.href = 'dashboard.html';
+                } else {
+                    errorMsg.innerText = data.error || 'Giriş başarısız';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.innerText = 'Sunucu hatası!';
+                errorMsg.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+
+</html>

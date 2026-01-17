@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genel Verimlilik Raporu</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="main-container">
+        <a href="dashboard.html" class="btn btn-back">← Panele Dön</a>
+
+        <div class="top-header" style="display: block; text-align: center;">
+            <h1>Genel Verimlilik Raporu</h1>
+            <p style="margin: 0;">Tüm kaynakların (Personel, Yatak, Ekipman) çapraz risk analizi</p>
+        </div>
+
+        <!-- Riskler -->
+        <div style="margin-bottom: 40px;">
+            <h2 style="color: var(--danger-color); display: flex; align-items: center; gap: 10px;">
+                🚨 Kritik Uyarılar
+            </h2>
+            <div id="riskListesi" class="grid-menu" style="grid-template-columns: 1fr; gap: 15px; margin-top: 20px;">
+                <div class="card" style="text-align: center; color: var(--text-light);">Analiz yapılıyor...</div>
+            </div>
+        </div>
+
+        <!-- Özet -->
+        <div>
+            <h2 style="color: var(--secondary-color);">
+                📈 Performans Özeti
+            </h2>
+            <div class="card" style="margin-top: 20px;">
+                <p>Detaylı bölüm performans metrikleri aşağıdadır.</p>
+                <div id="ozetListesi">Veriler alınıyor...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadReport() {
+            try {
+                // Paralel veri çekimi
+                const [resYatak, resPersonel, resEkipman] = await Promise.all([
+                    fetch('/bolumler/verimlilik'),
+                    fetch('/personeller/karneler'),
+                    fetch('/ekipmanlar/verimlilik')
+                ]);
+
+                const yatakData = await resYatak.json();
+                const personelData = await resPersonel.json();
+                const ekipmanData = await resEkipman.json();
+
+                let riskHtml = '';
+
+                // 1. Verimsiz Bölümler
+                if (yatakData.verimsiz_bolumler) {
+                    yatakData.verimsiz_bolumler.forEach(b => {
+                        riskHtml += `
+                        <div class="card" style="border-left: 5px solid var(--danger-color); display: flex; align-items: center; gap: 15px; padding: 20px; text-align: left;">
+                            <div style="font-size: 24px;">❌</div>
+                            <div>
+                                <h3 style="margin: 0; color: var(--text-main); font-size: 1.1rem;">${b.bolum_adi}</h3>
+                                <p style="margin: 0; font-size: 0.9rem;">Yatak kullanımı çok düşük (Ort: ${parseFloat(b.ortalama_yatak_kullanimi).toFixed(1)}). Kapatılması önerilir.</p>
+                            </div>
+                        </div>`;
+                    });
+                }
+
+                // 2. Personel Eksikliği
+                personelData.forEach(p => {
+                    if (p.karar.includes('ACİL')) {
+                        riskHtml += `
+                        <div class="card" style="border-left: 5px solid var(--warning-color); display: flex; align-items: center; gap: 15px; padding: 20px; text-align: left;">
+                            <div style="font-size: 24px;">⚠️</div>
+                            <div>
+                                <h3 style="margin: 0; color: var(--text-main); font-size: 1.1rem;">${p.sube}</h3>
+                                <p style="margin: 0; font-size: 0.9rem;">${p.karar}</p>
+                            </div>
+                        </div>`;
+                    }
+                });
+
+                // 3. Ekipman Yetersizliği
+                ekipmanData.filter(e => e.verimlilik_skoru < 1).forEach(e => {
+                    riskHtml += `
+                    <div class="card" style="border-left: 5px solid var(--primary-dark); display: flex; align-items: center; gap: 15px; padding: 20px; text-align: left;">
+                        <div style="font-size: 24px;">🔌</div>
+                        <div>
+                            <h3 style="margin: 0; color: var(--text-main); font-size: 1.1rem;">${e.ekipman_turu_adi} (${e.bolum_adi})</h3>
+                            <p style="margin: 0; font-size: 0.9rem;">Kapasite yetersiz! (Skor: ${parseFloat(e.verimlilik_skoru).toFixed(2)})</p>
+                        </div>
+                    </div>`;
+                });
+
+                if (riskHtml === '') {
+                    riskHtml = `
+                    <div class="card" style="border-left: 5px solid var(--success-color); padding: 30px; text-align: center;">
+                        <h3 style="color: var(--success-color);">✅ Sistem Stabil</h3>
+                        <p style="margin: 0;">Harika! Hiçbir kritik risk bulunamadı.</p>
+                    </div>`;
+                }
+
+                document.getElementById('riskListesi').innerHTML = riskHtml;
+                document.getElementById('ozetListesi').innerHTML = '<p style="color: var(--success-color);">Tüm veriler başarıyla analiz edildi.</p>'; // Özet kısmı için placeholder
+
+            } catch (err) { console.error(err); }
+        }
+        loadReport();
+    </script>
+</body>
+
+</html>

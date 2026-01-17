@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gelecek Tahmin Analizi</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="main-container">
+        <a href="dashboard.html" class="btn btn-back">← Panele Dön</a>
+
+        <div class="top-header" style="display: block; text-align: center;">
+            <h1>🔮 Gelecek Ay Tahminleri</h1>
+            <p style="margin: 0;">Yapay zeka destekli (Lineer Regresyon) hasta sayısı öngörüleri</p>
+        </div>
+
+        <!-- Grafik -->
+        <div class="card chart-wrapper">
+            <canvas id="tahminChart"></canvas>
+        </div>
+
+        <!-- Tahmin Kartları -->
+        <div id="tahminKartlari" class="grid-menu" style="margin-top: 30px;">
+            <p style="text-align: center; width: 100%;">Analiz yapılıyor...</p>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const res = await fetch('/analiz/tahmin');
+                const data = await res.json();
+
+                // Grafik Verilerini Hazırla
+                const labels = data.map(d => d.bolum_adi);
+                const currentVal = data.map(d => d.mevcut_hasta);
+                const nextVal = data.map(d => d.tahmini_hasta);
+
+                // Grafik Çiz
+                const ctx = document.getElementById('tahminChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Mevcut Durum',
+                                data: currentVal,
+                                borderColor: '#94a3b8', // Gri
+                                backgroundColor: '#94a3b8',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Gelecek Ay Tahmini',
+                                data: nextVal,
+                                borderColor: '#8b5cf6', // Mor
+                                backgroundColor: '#8b5cf6',
+                                borderDash: [5, 5], // Kesikli çizgi (Tahmin olduğu belli olsun)
+                                tension: 0.4,
+                                pointRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: 'Bölüm Bazlı Hasta Sayısı Trendi' }
+                        }
+                    }
+                });
+
+                // Kartları Oluştur
+                let html = '';
+                data.forEach(d => {
+                    const artisVar = d.tahmini_hasta > d.mevcut_hasta;
+                    const renk = artisVar ? 'status-critical' : 'status-normal'; // Artış varsa yoğunluk artacak demektir (Kritik/Dikkat)
+                    const icon = artisVar ? '📈' : '📉';
+
+                    html += `
+                    <div class="card" style="text-align: center;">
+                        <div style="font-size: 30px; margin-bottom: 10px;">${icon}</div>
+                        <h3>${d.bolum_adi}</h3>
+                        <div style="margin: 15px 0; font-size: 1.2rem; font-weight: bold;">
+                            ${d.mevcut_hasta} ➝ <span style="color: var(--secondary-color);">${d.tahmini_hasta}</span>
+                        </div>
+                        <span class="status-badge ${renk}">
+                            ${artisVar ? 'Artış Bekleniyor' : 'Düşüş Bekleniyor'} (%${Math.abs(d.degisim_orani)})
+                        </span>
+                    </div>`;
+                });
+                document.getElementById('tahminKartlari').innerHTML = html;
+
+            } catch (err) { console.error(err); }
+        }
+        loadData();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatak Yoğunluğu Analizi</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="main-container">
+        <a href="dashboard.html" class="btn btn-back">← Panele Dön</a>
+
+        <div class="top-header" style="display: block; text-align: center;">
+            <h1>Bölüm Yatak Yoğunluğu</h1>
+            <p style="margin: 0;">Bölüm bazlı doluluk oranları ve verimlilik skorları</p>
+        </div>
+
+        <div class="card chart-wrapper">
+            <canvas id="yatakChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const res = await fetch('/bolumler/yogunluk');
+                const data = await res.json();
+
+                const labels = data.map(d => d.bolum_adi);
+                const doluluk = data.map(d => d.yatak_kullanilan);
+                const verimlilik = data.map(d => d.yatak_verimlilik_orani);
+
+                const ctx = document.getElementById('yatakChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Kullanılan Yatak Sayısı',
+                                data: doluluk,
+                                backgroundColor: 'rgba(14, 165, 233, 0.6)',
+                                borderColor: 'rgba(14, 165, 233, 1)',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Verimlilik Skoru',
+                                data: verimlilik,
+                                type: 'line',
+                                borderColor: '#ef4444',
+                                backgroundColor: '#ef4444',
+                                tension: 0.3,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Adet' }, grid: { display: false } },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: { display: true, text: 'Verimlilik Skoru' },
+                            }
+                        }
+                    }
+                });
+            } catch (err) { console.error(err); }
+        }
+        loadData();
+    </script>
+</body>
+
+</html>
