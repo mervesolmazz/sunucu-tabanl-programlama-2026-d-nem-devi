@@ -2,8 +2,6 @@ HASTANE KARAR DESTEK SISTEMI (KDS)
 Ders: Sunucu Tabanli Programlama
 Gelistirici: Merve Solmaz
 
-NOT: Sisteme giris icin kullanici adi: 'admin', sifre: '123' kullanabilirsiniz. (Veritabanina bu kullanıcıyı eklemeyi unutmayin).
-
 PROJE ACIKLAMASI
 ----------------
 Bu proje, hastane yonetim sureclerini kolaylastirmak icin gelistirdigim bir web uygulamasidir. Sunucu tabanli programlama dersi icin Node.js kullanarak yazdim. Projede MVC (Model-View-Controller) yapisina sadik kaldim ve REST standartlarina uygun API adresleri olusturdum.
